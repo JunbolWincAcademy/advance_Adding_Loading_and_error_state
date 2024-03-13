@@ -55,13 +55,19 @@ export const UserDetail = ({ user }) => {
 
         const posts = await response.json(); // Correctly retrieving the posts from the response
 
-        /* Parsing JSON means converting the JSON formatted text in the response body into a JavaScript object. This is what await response.json(); does. It's an essential step after fetching data because the raw result from fetch is not directly usable as an object in your JavaScript code.
-        Parsing Response JSON Outside of the !ignore Check: The current placement of const posts = await response.json(); is within the if (!ignore) check. This is slightly misaligned with the ideal pattern. The JSON parsing should ideally occur before the ignore check to ensure that the operation is not dependent on the component's mount state. Instead, what should be inside the !ignore check is the state update logic (setPosts(posts) and setIsLoading(false)), as you want to prevent these operations if the component unmounts.This adjustment ensures that parsing the response to JSON happens regardless of the component's mount state, but state updates are protected against being executed after the component has unmounted.
-        Regarding JSON Parsing Position Relative to the !ignore Check: The parsing of the response (const posts = await response.json();) should indeed happen before any conditional checks related to component state updates, like the !ignore check. This ensures that the data is ready and parsed for when you need to update the state, assuming the operation should proceed (i.e., the component hasn't unmounted).
+        /* 
+        
+the main reason of moving it outside the if(!ignore) block is because in the next render ingnore wil be true.So this line wont run.
 
-        State Updates Inside the !ignore Check: Only the operations that update the component's state (setPosts(posts) and setIsLoading(false)) need to be within the !ignore condition. This ensures that if the component has been unmounted before these operations are executed, you don't attempt to update the state of an unmounted component, which would lead to errors.
-        Why This Approach? Parsing the response to JSON outside the !ignore check ensures that any potential errors during parsing are caught in the try-catch block. The conditional rendering based on the ignore flag should only guard against updates to the component state (like setting posts or loading state), which can lead to errors if the component has unmounted.
-        */
+Moving const posts = await response.json(); outside of the if (!ignore) block and before setting the state ensures that you always parse the response as JSON right after checking response.ok for errors. This organization makes the code clearer and ensures that JSON parsing and state updates occur in the correct order: after ensuring the response is OK and before potentially exiting due to the component being unmounted. 
+
+Parsing JSON means converting the JSON formatted text in the response body into a JavaScript object. This is what await response.json(); does. It's an essential step after fetching data because the raw result from fetch is not directly usable as an object in your JavaScript code.
+Parsing Response JSON Outside of the !ignore Check: The current placement of const posts = await response.json(); is within the if (!ignore) check. This is slightly misaligned with the ideal pattern. The JSON parsing should ideally occur before the ignore check to ensure that the operation is not dependent on the component's mount state. Instead, what should be inside the !ignore check is the state update logic (setPosts(posts) and setIsLoading(false)), as you want to prevent these operations if the component unmounts.This adjustment ensures that parsing the response to JSON happens regardless of the component's mount state, but state updates are protected against being executed after the component has unmounted.
+
+Regarding JSON Parsing Position Relative to the !ignore Check: The parsing of the response (const posts = await response.json();) should indeed happen before any conditional checks related to component state updates, like the !ignore check. This ensures that the data is ready and parsed for when you need to update the state, assuming the operation should proceed (i.e., the component hasn't unmounted).
+
+State Updates Inside the !ignore Check: Only the operations that update the component's state (setPosts(posts) and setIsLoading(false)) need to be within the !ignore condition. This ensures that if the component has been unmounted before these operations are executed, you don't attempt to update the state of an unmounted component, which would lead to errors.
+Why This Approach? Parsing the response to JSON outside the !ignore check ensures that any potential errors during parsing are caught in the try-catch block. The conditional rendering based on the ignore flag should only guard against updates to the component state (like setting posts or loading state), which can lead to errors if the component has unmounted.*/
 
         if (!ignore) {
           // if ignore NOT false which mean if  it is true then DON’T run the code bellow, but since it is false then run the code below
@@ -92,6 +98,14 @@ export const UserDetail = ({ user }) => {
       ignore = true; //✅ Set ignore to true on cleanup
     };
   }, [user]);
+  // Use if-statements for handling multiple conditions for clarity and maintainability, especially in scenarios with more than two conditions or when the conditions themselves are complex. Reserve nested ternary operators for simpler conditions where readability is not significantly impacted.
+if (error) {
+  return (<p>Error</p>);
+}
+
+if (isLoading) {
+  return (<p>Loading..</p>);
+}
 
   return (
     <div className="user-details">
